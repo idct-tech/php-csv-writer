@@ -1,0 +1,19 @@
+{
+    "name": "idct/php-csv-writer",
+    "description": "CsvWriter based on TextWriter.",
+    "repositories": [],
+    "require": {
+        "php": ">=7.1",
+        "ext-ctype": "*"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^2.16",
+        "phpunit/phpunit": "^7.5",
+        "mikey179/vfsstream": "^1.6.8"
+    },
+    "autoload": {
+        "psr-4": {
+            "IDCT\\CsvWriter\\": "src/"
+        }
+    }
+}
