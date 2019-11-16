@@ -15,5 +15,11 @@
         "psr-4": {
             "IDCT\\CsvWriter\\": "src/"
         }
+    },
+    "scripts": {
+        "test": [
+            "Composer\\Config::disableProcessTimeout",
+            "./vendor/phpunit/phpunit/phpunit tests"
+        ]
     }
 }
