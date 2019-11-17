@@ -5,6 +5,10 @@ Basic CsvWriter based on a TextWriter (also provided).
 Main purpose of this library is to provide an object-oriented way of buffered
 CSV files writing.
 
+## Status
+
+![Build status](https://github.com/ideaconnect/php-csv-writer/workflows/All%20tests%20using%20PHPUnit/badge.svg)
+
 ## Usage
 
 To initialize:
