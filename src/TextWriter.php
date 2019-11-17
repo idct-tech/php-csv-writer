@@ -27,6 +27,9 @@ class TextWriter
     const EOL_LINUX = "\n";
     const EOL_MAC = "\r";
 
+    protected $contents;
+    protected $contentsLen;
+
     /**
      * Buffer size in bytes.
      *
@@ -74,7 +77,7 @@ class TextWriter
 
         $this->bufferSize = $bufferSize;
         if (is_resource($this->file)) {
-            $this->applyBufferSize();
+            $this->flush();
         }
 
         return $this;
@@ -161,9 +164,8 @@ class TextWriter
             throw new RuntimeException('Could not lock file ' . $filename . '.');
         }
 
-        if ($this->getBufferSize() > 0) {
-            $this->applyBufferSize();
-        }
+        $this->contents = "";
+        $this->contentsLen = 0;
 
         return $this;
     }
@@ -176,7 +178,7 @@ class TextWriter
     public function close(): TextWriter
     {
         if (is_resource($this->file)) {
-            fflush($this->file);
+            $this->flush();
             flock($this->file, LOCK_UN);    // release the lock
             fclose($this->file);
         }
@@ -193,9 +195,14 @@ class TextWriter
     public function flush(): self
     {
         $this->validateResource();
+
+        fwrite($this->file, $this->contents);
         if (!fflush($this->file)) {
             throw new RuntimeException("Could not flush file's internal buffer.");
         }
+
+        $this->contents = "";
+        $this->contentsLen = 0;
 
         return $this;
     }
@@ -209,7 +216,37 @@ class TextWriter
     public function write($text = null): TextWriter
     {
         $this->validateResource();
-        fwrite($this->file, (string) $text);
+
+        //no text, no action
+        if (empty($text)) {
+            return $this;
+        }
+
+        //direct write, no buffer
+        $bufferSize = $this->getBufferSize();
+        $textLen = strlen($text);
+        if ($bufferSize === 0) {
+            $this->contents = $text;
+            $this->contentsLen = $textLen;
+            $this->flush();
+
+            return $this;
+        }
+
+        //write by parts
+        $freeBuffer = $bufferSize - $this->contentsLen;
+        $startFragment = substr($text, 0, $freeBuffer);
+        $startFragmentLen = strlen($startFragment);
+        $this->contents .= $startFragment;
+        $this->contentsLen += $startFragmentLen;
+
+        if ($this->contentsLen >= $bufferSize) {
+            $this->flush();
+        }
+
+        if ($textLen > $freeBuffer) {
+            self::write(substr($text, $freeBuffer));
+        }
 
         return $this;
     }
@@ -224,26 +261,9 @@ class TextWriter
     public function writeln($text = null): TextWriter
     {
         $this->validateResource();
-        $this->write($text . $this->getEolSymbol());
-
+        self::write($text . $this->getEolSymbol());
+        
         return $this;
-    }
-
-    /**
-     * Attempts to set the buffer size defined by setBufferSize on the open file
-     * resource.
-     *
-     * @throws RuntimeException
-     * @return $this;
-     */
-    protected function applyBufferSize(): TextWriter
-    {
-        $code = stream_set_write_buffer($this->file, $this->getBufferSize());
-        if ($code === 0) {
-            return $this;
-        }
-
-        throw new RuntimeException('Could not apply buffer ' . $this->getBufferSize() . ', code: ' . $code);
     }
 
     /**

@@ -2,12 +2,17 @@
 
 declare(strict_types=1);
 
+namespace IDCT\CsvWriter\Tests;
+
 use IDCT\CsvWriter\TextWriter;
+use InvalidArgumentException;
 use org\bovigo\vfs\vfsStream;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 final class TextWriterTest extends TestCase
 {
+    use \phpmock\phpunit\PHPMock;
     /**
      * @dataProvider bufferSizes
      */
@@ -99,40 +104,56 @@ final class TextWriterTest extends TestCase
         $writer->close();
     }
 
-    public function testOpenWithBufferSize()
+    public function testOpenFlockFail()
+    {
+        $time = $this->getFunctionMock("IDCT\\CsvWriter", "flock");
+        $time->expects($this->once())->willReturn(false);
+        $this->expectException(RuntimeException::class);
+        $fileSystemMock = vfsStream::setup('sampleDir');
+        $writer = new TextWriter();
+        $writer->open($fileSystemMock->url('sampleDir') . DIRECTORY_SEPARATOR . 'somefile.csv', TextWriter::FILEMODE_NEW);
+        $writer->close();
+    }
+
+    public function testFflush()
     {
         $fileSystemMock = vfsStream::setup('sampleDir');
-        $writerMock = $this->getMockBuilder(TextWriter::class)
-        ->setMethods(['applyBufferSize', 'getBufferSize'])
-        ->getMock();
-        $writerMock->expects($this->once())
-            ->method('applyBufferSize')
-            ->will($this->returnValue($writerMock));
+        $writer = new TextWriter();
+        $writer->setBufferSize(1024);
+        $filepath = $fileSystemMock->url('sampleDir') . DIRECTORY_SEPARATOR . 'somefile.csv';
+        $writer->open($filepath, TextWriter::FILEMODE_NEW);
+        $writer->write('test');
+        $dataSofar = file_get_contents($filepath);
+        $this->assertEquals("", $dataSofar);
 
-        $writerMock->expects($this->once())
-            ->method('getBufferSize')
-            ->will($this->returnValue(8196));
+        $writer->flush();
+        $dataSofar = file_get_contents($filepath);
+        $this->assertEquals("test", $dataSofar);
+        $writer->close();
+    }
 
-        $writerMock->open($fileSystemMock->url('sampleDir') . DIRECTORY_SEPARATOR . 'somefile.csv', TextWriter::FILEMODE_NEW);
-        $writerMock->close();
-        $this->assertTrue(file_exists($fileSystemMock->url('sampleDir') . DIRECTORY_SEPARATOR . 'somefile.csv'));
+    public function testFflushInvalid()
+    {
+        $this->expectException(RuntimeException::class);
+        $time = $this->getFunctionMock("IDCT\\CsvWriter", "fflush");
+        $time->expects($this->once())->willReturn(false);
+
+        $fileSystemMock = vfsStream::setup('sampleDir');
+        $writer = new TextWriter();
+        $writer->setBufferSize(1024);
+        $filepath = $fileSystemMock->url('sampleDir') . DIRECTORY_SEPARATOR . 'somefile.csv';
+        $writer->open($filepath, TextWriter::FILEMODE_NEW);
+        $writer->flush();
     }
 
     public function testClose()
     {
-        if (preg_match('/^Linux.*?Microsoft.*?$/i', php_uname())) {
-            $this->markTestSkipped('Test will not work on WSL v1.');
-        }
-        
-        //sadly vfsStream does not support locking yet...
         $writer = new TextWriter();
         $filepath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'somefile.csv';
         $writer->open($filepath);
-        @unlink($filepath);
-        $this->assertTrue(file_exists($filepath));
+        $this->assertEquals(strtolower(get_resource_type($this->getInnerPropertyValueByReflection($writer, 'file'))), "stream");
         $writer->close();
-        @unlink($filepath);
-        $this->assertFalse(file_exists($filepath));
+        $this->assertEquals(strtolower(get_resource_type($this->getInnerPropertyValueByReflection($writer, 'file'))), "unknown");
     }
 
     public function testFlushNoFile()
@@ -167,6 +188,37 @@ final class TextWriterTest extends TestCase
         $writer->close();
         
         $this->assertEquals("sample text", file_get_contents($filepath));
+    }
+
+    public function testWriteBuffer()
+    {
+        $fileSystemMock = vfsStream::setup('sampleDir');
+
+        $writer = new TextWriter();
+        $filepath = $fileSystemMock->url('sampleDir') . DIRECTORY_SEPARATOR . 'somefile.csv';
+        $writer->setBufferSize(4);
+        $writer->open($filepath, TextWriter::FILEMODE_NEW);
+        $writer->write("xxx");
+        $writer->write("aaaabbbbcccc");
+        $writer->close();
+        
+        $this->assertEquals("xxxaaaabbbbcccc", file_get_contents($filepath));
+    }
+
+    public function testWriteBufferDisable()
+    {
+        $fileSystemMock = vfsStream::setup('sampleDir');
+
+        $writer = new TextWriter();
+        $filepath = $fileSystemMock->url('sampleDir') . DIRECTORY_SEPARATOR . 'somefile.csv';
+        $writer->setBufferSize(4);
+        $writer->open($filepath, TextWriter::FILEMODE_NEW);
+        $writer->write("xxx");
+        $writer->setBufferSize(null);
+        $writer->write("aaaabbbbcccc");
+        $writer->close();
+        
+        $this->assertEquals("xxxaaaabbbbcccc", file_get_contents($filepath));
     }
 
     public function testWriteEmpty()
@@ -206,5 +258,14 @@ final class TextWriterTest extends TestCase
         $writer->writeln();
         $writer->close();
         $this->assertEquals(TextWriter::EOL_WINDOWS, file_get_contents($filepath));
+    }
+
+    private function getInnerPropertyValueByReflection($instance, $property)
+    {
+        $reflector = new \ReflectionClass($instance);
+        $reflector_property = $reflector->getProperty($property);
+        $reflector_property->setAccessible(true);
+
+        return $reflector_property->getValue($instance);
     }
 }

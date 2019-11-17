@@ -214,7 +214,6 @@ class CsvWriter extends TextWriter
     public function write($data = null): TextWriter
     {
         $this->validateResource();
-
         if ($data === null) {
             $data = [];
         }
@@ -227,9 +226,7 @@ class CsvWriter extends TextWriter
             throw new LogicException('Invalid fields count, must be exactly: ' . $this->getFieldsNamesCount());
         }
 
-        if (!fputcsv($this->file, $data, $this->getDelimeter(), $this->getEnclosure())) {
-            throw new RuntimeException('Write operation failed.');
-        }
+        parent::writeln($this->arrayToCsv($data));
 
         return $this;
     }
@@ -249,5 +246,16 @@ class CsvWriter extends TextWriter
     public function writeln($data = null): TextWriter
     {
         return $this->write($data);
+    }
+
+    protected function arrayToCsv(array $data): string
+    {
+        $handle = fopen('php://memory', 'w');
+        fputcsv($handle, $data, $this->getDelimeter(), $this->getEnclosure());
+        fseek($handle, 0);
+        $csv = stream_get_contents($handle);
+        $csv = mb_convert_encoding($csv, 'iso-8859-2', 'utf-8');
+
+        return trim($csv);
     }
 }

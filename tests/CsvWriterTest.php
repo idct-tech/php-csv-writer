@@ -2,9 +2,14 @@
 
 declare(strict_types=1);
 
+namespace IDCT\CsvWriter\Tests;
+
 use IDCT\CsvWriter\CsvWriter;
+use InvalidArgumentException;
+use LogicException;
 use org\bovigo\vfs\vfsStream;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 final class CsvWriterTest extends TestCase
 {
@@ -96,6 +101,35 @@ final class CsvWriterTest extends TestCase
         $contents = file_get_contents($path);
         $this->assertEquals('headA,headB' . PHP_EOL . '"a,a","b,b"' . PHP_EOL . '"d,d","c,c"' . PHP_EOL, $contents);
     }
+
+    public function testWriteNoHeadersWindowsEol()
+    {
+        $fileSystemMock = vfsStream::setup('sampleDir');
+        $writer = new CsvWriter(',', '"');
+        $path = $fileSystemMock->url('sampleDir') . DIRECTORY_SEPARATOR . 'somefile.csv';
+        $writer->setEolSymbol($writer::EOL_WINDOWS);
+        $writer->open($path, CsvWriter::FILEMODE_NEW);
+        $writer->write(['a,a','b,b','c,c']);
+        $writer->close();
+
+        $contents = file_get_contents($path);
+        $this->assertEquals('"a,a","b,b","c,c"' . $writer::EOL_WINDOWS, $contents);
+    }
+
+    public function testWriteWithHeadersWindowsEol()
+    {
+        $fileSystemMock = vfsStream::setup('sampleDir');
+        $writer = new CsvWriter(',', '"');
+        $path = $fileSystemMock->url('sampleDir') . DIRECTORY_SEPARATOR . 'somefile.csv';
+        $writer->setEolSymbol($writer::EOL_WINDOWS);
+        $writer->openWithFieldsNames($path, ['headA', 'headB'], CsvWriter::FILEMODE_NEW);
+        $writer->write(['a,a','b,b']);
+        $writer->write(['d,d','c,c']);
+        $writer->close();
+
+        $contents = file_get_contents($path);
+        $this->assertEquals('headA,headB' . $writer::EOL_WINDOWS . '"a,a","b,b"' . $writer::EOL_WINDOWS . '"d,d","c,c"' . $writer::EOL_WINDOWS, $contents);
+    }
     
     public function testWriteWithHeadersWithoutAppendingThem()
     {
@@ -103,6 +137,7 @@ final class CsvWriterTest extends TestCase
         $writer = new CsvWriter(',', '"');
         $path = $fileSystemMock->url('sampleDir') . DIRECTORY_SEPARATOR . 'somefile.csv';
         $writer->openWithFieldsNames($path, ['headA', 'headB'], CsvWriter::FILEMODE_APPEND);
+    
         $writer->write(['a,a','b,b']);
         $writer->write(['d,d','c,c']);
         $writer->close();
