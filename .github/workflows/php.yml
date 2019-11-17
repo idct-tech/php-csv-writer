@@ -24,5 +24,8 @@ jobs:
     - name: Run all tests
       run: composer run-script test
 
-    - name: Run all tests
+    - name: Send data to coveralls
+      env: # Or as an environment variable
+        COVERALLS_RUN_LOCALLY: ${{ secrets.COVERALLS_RUN_LOCALLY }}
+        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
       run: composer run-script generate-coveralls
