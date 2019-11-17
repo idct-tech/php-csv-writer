@@ -207,7 +207,6 @@ class CsvWriter extends TextWriter
      * @throws RuntimeException
      * @throws LogicException
      * @throws InvalidArgumentException
-     * @todo eol support
      * @param string[] $data
      * @return $this
      */
@@ -239,7 +238,7 @@ class CsvWriter extends TextWriter
      *
      * @throws RuntimeException
      * @throws LogicException
-     * @todo eol support
+     * @throws InvalidArgumentException
      * @param string[] $data
      * @return $this
      */
@@ -248,6 +247,12 @@ class CsvWriter extends TextWriter
         return $this->write($data);
     }
 
+    /**
+     * Converts an array to CSV string.
+     * 
+     * @param array $string
+     * @return string
+     */
     protected function arrayToCsv(array $data): string
     {
         $handle = fopen('php://memory', 'w');
@@ -257,5 +262,12 @@ class CsvWriter extends TextWriter
         $csv = mb_convert_encoding($csv, 'iso-8859-2', 'utf-8');
 
         return trim($csv);
+    }
+
+    /**
+     * Destroys the instance.
+     */
+    public function __destruct() {
+        $this->close();
     }
 }

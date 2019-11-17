@@ -25,7 +25,7 @@ class TextWriter
 
     const EOL_WINDOWS = "\r\n";
     const EOL_LINUX = "\n";
-    const EOL_MAC = "\r";
+    const EOL_MACLEGACY = "\r";
 
     protected $contents;
     protected $contentsLen;
