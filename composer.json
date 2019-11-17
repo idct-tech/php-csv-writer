@@ -20,8 +20,7 @@
     },
     "scripts": {
         "test": [
-            "Composer\\Config::disableProcessTimeout",
-            "./vendor/phpunit/phpunit/phpunit tests"
+            "./vendor/phpunit/phpunit/phpunit"
         ]
     }
 }
