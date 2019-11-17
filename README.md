@@ -4,6 +4,7 @@ Basic CsvWriter based on a buffered TextWriter (also provided).
 Supports buffering in memory and proper handling of EOL setting which is not available easily with native `fputcsv` function.
 
 ![Tests status](https://github.com/ideaconnect/php-csv-writer/workflows/All%20tests%20using%20PHPUnit/badge.svg) [![Coverage Status](https://coveralls.io/repos/github/ideaconnect/php-csv-writer/badge.svg?branch=master)](https://coveralls.io/github/ideaconnect/php-csv-writer?branch=master) ![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/ideaconnect/php-csv-writer?label=latest%20version&sort=semver)
+
 Main purpose of this library is to provide an object-oriented way of buffered CSV files writing.
 
 ## Installation
