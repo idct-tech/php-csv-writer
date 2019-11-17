@@ -1,6 +1,23 @@
 {
     "name": "idct/php-csv-writer",
-    "description": "CsvWriter based on TextWriter.",
+    "description": "CsvWriter based on a buffered TextWriter with EOL support.",
+    "keywords": [
+        "csv",
+        "eol",
+        "io",
+        "textwriter",
+        "csvwriter",
+        "text",
+        "idct"
+    ], 
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Bartosz Pachołek",
+            "email": "bartosz@idct.pl",
+            "role": "Lead"
+        }
+    ],
     "repositories": [],
     "require": {
         "php": ">=7.1",
