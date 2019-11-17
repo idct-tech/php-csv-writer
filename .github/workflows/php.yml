@@ -14,7 +14,7 @@ jobs:
       uses: shivammathur/setup-php@master
       with:
         php-version: '7.3'
-        
+
     - name: Validate composer.json and composer.lock
       run: composer validate
 
@@ -23,3 +23,6 @@ jobs:
 
     - name: Run all tests
       run: composer run-script test
+
+    - name: Run all tests
+      run: composer run-script generate-coveralls
