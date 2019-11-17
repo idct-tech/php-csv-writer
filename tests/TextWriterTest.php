@@ -106,7 +106,7 @@ final class TextWriterTest extends TestCase
 
     public function testOpenFlockFail()
     {
-        $time = $this->getFunctionMock("IDCT\\CsvWriter", "flock");
+        $time = $this->getFunctionMock("IDCT\\CsvWriter\\", "flock");
         $time->expects($this->once())->willReturn(false);
         $this->expectException(RuntimeException::class);
         $fileSystemMock = vfsStream::setup('sampleDir');
@@ -135,7 +135,7 @@ final class TextWriterTest extends TestCase
     public function testFflushInvalid()
     {
         $this->expectException(RuntimeException::class);
-        $time = $this->getFunctionMock("IDCT\\CsvWriter", "fflush");
+        $time = $this->getFunctionMock("IDCT\\CsvWriter\\", "fflush");
         $time->expects($this->once())->willReturn(false);
 
         $fileSystemMock = vfsStream::setup('sampleDir');
