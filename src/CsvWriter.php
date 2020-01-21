@@ -130,9 +130,7 @@ class CsvWriter extends TextWriter
      */
     public function close(): TextWriter
     {
-        if (is_resource($this->file)) {
-            fclose($this->file);
-        }
+        parent::close();
 
         $this->fieldsNames = null;
         $this->fieldsNamesCount = null;
