@@ -256,10 +256,9 @@ class CsvWriter extends TextWriter
         $handle = fopen('php://memory', 'w');
         fputcsv($handle, $data, $this->getDelimeter(), $this->getEnclosure());
         fseek($handle, 0);
-        $csv = stream_get_contents($handle);
-        $csv = mb_convert_encoding($csv, 'iso-8859-2', 'utf-8');
-
-        return trim($csv);
+        $csv = rtrim(stream_get_contents($handle));
+        fclose($handle);
+        return rtrim($csv);
     }
 
     /**
